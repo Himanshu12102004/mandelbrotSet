@@ -46,12 +46,23 @@ iterationsField.onChange(() => {
 scaleFolder.add(scale, "x", 50, 500);
 scaleFolder.add(scale, "y", 50, 500);
 scaleFolder.open();
-window.addEventListener("mousemove", (e) => {
-  mouse.x.position = e.clientX;
-  mouse.y.position = e.clientY;
+function updateMousePosition(event) {
+  let clientX, clientY;
 
-  mouse.x.coord = e.clientX - canvas.width / 2;
-  mouse.y.coord = -e.clientY + canvas.height / 2;
+  if (event.type === "mousemove") {
+    clientX = event.clientX;
+    clientY = event.clientY;
+  } else if (event.type === "touchmove") {
+    clientX = event.touches[0].clientX;
+    clientY = event.touches[0].clientY;
+  }
+
+  mouse.x.position = clientX;
+  mouse.y.position = clientY;
+
+  mouse.x.coord = clientX - canvas.width / 2;
+  mouse.y.coord = -clientY + canvas.height / 2;
+
   document.querySelector(".mouseCoord").style.top =
     mouse.y.position + 10 + "px";
   document.querySelector(".mouseCoord").style.left =
@@ -65,9 +76,12 @@ window.addEventListener("mousemove", (e) => {
     (mouse.y.coord / scale.y <= 0 ? "" : "+") +
     (mouse.y.coord / scale.y).toFixed(3) +
     "i";
-  calc();
-});
 
+  calc();
+}
+
+canvas.addEventListener("mousemove", updateMousePosition);
+canvas.addEventListener("touchmove", updateMousePosition);
 class Ellipse {
   constructor(coords, radius, color) {
     this.position = { x: null, y: null };
@@ -177,51 +191,53 @@ function animate() {
 animate();
 function makeGrid() {
   ctx.fillStyle = "black";
-  ctx.fillRect(0, 0, innerWidth, innerHeight);
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.strokeStyle = "red";
-  ctx.moveTo(0, innerHeight / 2);
-  ctx.lineTo(innerWidth, innerHeight / 2);
+  ctx.beginPath(); // You should begin a new path before drawing lines
+  ctx.moveTo(0, canvas.height / 2);
+  ctx.lineTo(canvas.width, canvas.height / 2);
   ctx.stroke();
   ctx.beginPath();
-  ctx.moveTo(innerWidth / 2, 0);
-  ctx.lineTo(innerWidth / 2, innerHeight);
+  ctx.moveTo(canvas.width / 2, 0);
+  ctx.lineTo(canvas.width / 2, canvas.height);
   ctx.stroke();
 
   for (
-    let i = innerWidth / 2 + scale.x, j = innerWidth / 2 - scale.x;
-    i <= innerWidth;
+    let i = canvas.width / 2 + scale.x, j = canvas.width / 2 - scale.x;
+    i <= canvas.width;
     j -= scale.x, i += scale.x
   ) {
     ctx.strokeStyle = "blue";
     ctx.beginPath();
     ctx.moveTo(i, 0);
-    ctx.lineTo(i, innerHeight);
+    ctx.lineTo(i, canvas.height);
     ctx.stroke();
 
     ctx.beginPath();
     ctx.moveTo(j, 0);
-    ctx.lineTo(j, innerHeight);
+    ctx.lineTo(j, canvas.height);
     ctx.stroke();
   }
   for (
-    let i = innerHeight / 2 + scale.y, j = innerHeight / 2 - scale.y;
-    i <= innerWidth;
+    let i = canvas.height / 2 + scale.y, j = canvas.height / 2 - scale.y;
+    i <= canvas.height; // Use canvas.height instead of canvas.width
     j -= scale.y, i += scale.y
   ) {
     ctx.strokeStyle = "blue";
     ctx.beginPath();
     ctx.moveTo(0, i);
-    ctx.lineTo(innerWidth, i);
+    ctx.lineTo(canvas.width, i);
     ctx.stroke();
 
     ctx.beginPath();
     ctx.moveTo(0, j);
-    ctx.lineTo(innerWidth, j);
+    ctx.lineTo(canvas.width, j);
     ctx.stroke();
   }
   ctx.strokeStyle = "green";
   unitCircle.update();
 }
+
 function calc() {
   const start = { x: 0, y: 0 };
   let complexA = math.complex(mouseCircle.coords.x, mouseCircle.coords.y);
@@ -236,51 +252,6 @@ function calc() {
       new Circle(complexX, (points[i].radius * 0.95) / scale.x, "white")
     );
   }
-  // for (let i = 1; i < 100; i++) {
-  //   if (
-  //     points[i].coords.x == points[i + 1].coords.x &&
-  //     points[i].coords.y == points[i + 1].coords.y
-  //   ) {
-  //     console.log(points[i].coords);
-  //     break;
-  //   }
-  // }
-}
-function analyzeConvergence(distanceArray, tolerance) {
-  const n = distanceArray.length;
-
-  if (n === 0) {
-    // No data, cannot determine convergence
-    return "No data";
-  }
-
-  // Check if the distance array stabilizes
-  const stabilized = distanceArray
-    .slice(-3)
-    .every((d, i, arr) => Math.abs(d - arr[0]) < tolerance);
-
-  if (stabilized) {
-    // Converges to a stable value
-    return "Converges to " + distanceArray[n - 1];
-  }
-
-  // Check if the distance array oscillates
-  const oscillates = distanceArray
-    .slice(-3)
-    .every((d, i, arr) => i % 2 === 0 && Math.abs(d - arr[0]) < tolerance);
-
-  if (oscillates) {
-    // Oscillates
-    return "Oscillates";
-  }
-
-  // If it hasn't converged or oscillated, it diverges
-  return "Diverges";
-}
-function distanceFormula(coord1, coord2) {
-  return Math.sqrt(
-    Math.pow(coord1.re - coord2.re, 2) + Math.pow(coord1.im - coord2.im, 2)
-  );
 }
 function layGridPoins() {
   for (let i = 0; i <= canvas.width / (2 * scale.x); i += 1 / density) {
