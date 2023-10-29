@@ -318,3 +318,4 @@ document.querySelector(".imaginary").textContent =
   (mouse.y.coord / scale.y <= 0 ? "" : "+") +
   (mouse.y.coord / scale.y).toFixed(3) +
   "i";
+calc();
