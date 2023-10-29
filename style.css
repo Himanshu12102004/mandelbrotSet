@@ -19,3 +19,7 @@
   width: fit-content;
   text-align: center;
 }
+body {
+  position: relative;
+  overflow: hidden;
+}
