@@ -4,10 +4,6 @@ const ctx = canvas.getContext("2d");
 const fx = math.evaluate("f(x,c)=x^2+c");
 canvas.height = innerHeight;
 canvas.width = innerWidth;
-const mouse = {
-  x: { position: 0, coord: -canvas.width / 2 },
-  y: { position: 0, coord: +canvas.width / 2 },
-};
 
 let quad1 = [];
 let quad3 = [];
@@ -30,6 +26,11 @@ ctx.stroke();
 let calcScale =
   innerWidth > innerHeight ? innerHeight / 2 - 50 : innerWidth / 2 - 50;
 const scale = { x: calcScale, y: calcScale };
+const mouse = {
+  x: { position: 0, coord: -canvas.width / (2 * scale.x) },
+  y: { position: 0, coord: +canvas.height / (2 * scale.y) },
+};
+
 const drawingSpecifics = { iterations: 100 };
 let scaleFolder = gui.addFolder("scale");
 let iterationFolder = gui.addFolder("iterations");
@@ -43,12 +44,28 @@ const iterationsField = iterationFolder.add(
 iterationsField.onChange(() => {
   calc();
 });
-scaleFolder.add(scale, "x", 50, 500);
-scaleFolder.add(scale, "y", 50, 500);
+
+scaleFolder.add(scale, "x", 50, 500).onChange(() => {
+  calc();
+
+  mouse.y.position = points[1].position.y;
+  mouse.x.position = points[1].position.x;
+});
+scaleFolder.add(scale, "y", 50, 500).onChange(() => {
+  calc();
+
+  mouse.y.position = points[1].position.y;
+  mouse.x.position = points[1].position.x;
+  // console.log(mouseCircle.position);
+});
 scaleFolder.open();
+
 function updateMousePosition(event) {
   let clientX, clientY;
-
+  if ((event.type = "touch")) {
+    clientX = event.pageX;
+    clientY = event.pageY;
+  }
   if (event.type === "mousemove") {
     clientX = event.clientX;
     clientY = event.clientY;
@@ -59,29 +76,33 @@ function updateMousePosition(event) {
 
   mouse.x.position = clientX;
   mouse.y.position = clientY;
+  mouse.x.coord = (clientX - canvas.width / 2) / scale.x;
+  mouse.y.coord = (-clientY + canvas.height / 2) / scale.y;
+  let mouseX = mouse.x.position + 5;
+  let mouseY = mouse.y.position + 5;
+  const mouseDom = document.querySelector(".mouseCoord");
+  if (mouseX + mouseDom.offsetWidth > canvas.width) {
+    mouseX = canvas.width - mouseDom.offsetWidth;
+  }
 
-  mouse.x.coord = clientX - canvas.width / 2;
-  mouse.y.coord = -clientY + canvas.height / 2;
-
-  document.querySelector(".mouseCoord").style.top =
-    mouse.y.position + 10 + "px";
-  document.querySelector(".mouseCoord").style.left =
-    mouse.x.position + 10 + "px";
-
+  if (mouseY + mouseDom.offsetHeight > canvas.height) {
+    mouseY = canvas.height - mouseDom.offsetHeight;
+  }
+  mouseDom.style.left = mouseX + "px";
+  mouseDom.style.top = mouseY + "px";
   document.querySelector(".real").textContent =
-    (mouse.x.coord / scale.x <= 0 ? "" : "+") +
-    (mouse.x.coord / scale.x).toFixed(3);
+    (mouse.x.coord <= 0 ? "" : "+") + mouse.x.coord.toFixed(3);
 
   document.querySelector(".imaginary").textContent =
-    (mouse.y.coord / scale.y <= 0 ? "" : "+") +
-    (mouse.y.coord / scale.y).toFixed(3) +
-    "i";
+    (mouse.y.coord <= 0 ? "" : "+") + mouse.y.coord.toFixed(3) + "i";
 
   calc();
 }
 
 canvas.addEventListener("mousemove", updateMousePosition);
 canvas.addEventListener("touchmove", updateMousePosition);
+canvas.addEventListener("click", updateMousePosition);
+
 class Ellipse {
   constructor(coords, radius, color) {
     this.position = { x: null, y: null };
@@ -157,18 +178,19 @@ class Circle {
 
 const unitCircle = new Ellipse({ re: 0, im: 0 }, 1, "rgba(0,0,0,0)");
 unitCircle.update();
-const mouseCircle = new Circle({ re: 0, im: 0 }, 0.02, "red");
+const mouseCircle = new Circle({ re: 0, im: 0 }, 0.025, "red");
 const startCircle = new Circle({ re: 0, im: 0 }, 0.02, "red");
 
 points.push(startCircle);
-mouseCircle.update();
 function animate() {
   requestAnimationFrame(animate);
-
+  mouseCircle.update();
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   makeGrid();
   mouseCircle.position.x = mouse.x.position;
   mouseCircle.position.y = mouse.y.position;
   mouseCircle.update();
+
   for (let i = 0; i < quad1.length; i++) {
     for (let j = 0; j < quad1[0].length; j++) {
       quad1[i][j].update();
@@ -240,7 +262,8 @@ function makeGrid() {
 
 function calc() {
   const start = { x: 0, y: 0 };
-  let complexA = math.complex(mouseCircle.coords.x, mouseCircle.coords.y);
+  mouseCircle.update();
+  let complexA = math.complex(mouse.x.coord, mouse.y.coord);
   let complexX = math.complex(start.x, start.y);
   startCircle.coords.x = start.x;
   startCircle.coords.y = start.y;
@@ -282,11 +305,8 @@ function layGridPoins() {
   }
 }
 document.querySelector(".real").textContent =
-  (mouse.x.coord / scale.x <= 0 ? "" : "+") +
-  (mouse.y.coord / scale.y).toFixed(3);
+  (mouse.x.coord <= 0 ? "" : "+") + mouse.y.coord.toFixed(3);
 
 document.querySelector(".imaginary").textContent =
-  (mouse.y.coord / scale.y <= 0 ? "" : "+") +
-  (mouse.y.coord / scale.y).toFixed(3) +
-  "i";
+  (mouse.y.coord <= 0 ? "" : "+") + mouse.y.coord.toFixed(3) + "i";
 calc();
