@@ -11,7 +11,7 @@ let quad3 = [];
 let quad2 = [];
 let quad4 = [];
 let density = 5;
-
+let faded = false;
 let points = [];
 ctx.fillStyle = "black";
 ctx.fillRect(0, 0, innerWidth, innerHeight);
@@ -61,6 +61,14 @@ scaleFolder.add(scale, "y", 50, 500).onChange(() => {
 scaleFolder.open();
 
 function updateMousePosition(event) {
+  if (!faded) {
+    const fadeDom = document.querySelector(".tap");
+    fadeDom.classList.add("fade");
+    faded = true;
+    setTimeout(() => {
+      fadeDom.style.display = "none";
+    }, 3000);
+  }
   let clientX, clientY;
   if ((event.type = "touch")) {
     clientX = event.pageX;
