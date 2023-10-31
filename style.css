@@ -24,7 +24,7 @@ body {
   overflow: hidden;
 }
 .tap {
-  background-color: rgba(69, 69, 69, 0.4);
+  /* background-color: rgba(69, 69, 69, 0.4); */
   position: absolute;
   justify-content: center;
   align-items: center;
@@ -37,7 +37,8 @@ body {
   color: white;
   text-align: center;
   opacity: 1;
-  transition: all 3s ease;
+  transition: all 1s ease;
+  min-width: 300px;
 }
 .fade {
   opacity: 0;

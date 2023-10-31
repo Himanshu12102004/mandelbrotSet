@@ -67,7 +67,7 @@ function updateMousePosition(event) {
     faded = true;
     setTimeout(() => {
       fadeDom.style.display = "none";
-    }, 3000);
+    }, 1000);
   }
   let clientX, clientY;
   if ((event.type = "touch")) {
